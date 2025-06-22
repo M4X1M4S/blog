@@ -1,15 +1,16 @@
-import dotenv from "dotenv";
+import "dotenv/config";
+import userRoutes from "./routes/userRoutes.js";
 import express from "express";
 import connectToDatabase from "./utils/db.js";
 const app = express();
-dotenv.config();
+// dotenv.config();
 connectToDatabase();
-const PORT = process.env.PORT || 5000;
+const PORT = 5000;
 app.use(express.json());
-// app.use("/api/v1", userRoutes);
+app.use("/api/v1", userRoutes);
 app.get("/", (req, res) => {
-    console.log("API is running");
-    res.send("API is running");
+    res.send("User service is running");
+    console.log("jjsjsj");
 });
 app.listen(PORT, () => {
     console.log(`User service is running on port ${PORT}`);
