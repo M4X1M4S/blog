@@ -1,7 +1,7 @@
 import mongoose, { Document } from "mongoose";
 
 interface IUser extends mongoose.Document {
-  username: string;
+  name: string;
   email: string;
   instagram: string;
   linkedin: string;
@@ -10,7 +10,7 @@ interface IUser extends mongoose.Document {
 }
 const schema: mongoose.Schema<IUser> = new mongoose.Schema(
   {
-    username: { type: String, required: true },
+    name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     instagram: { type: String, required: false },
     linkedin: { type: String, required: false },
