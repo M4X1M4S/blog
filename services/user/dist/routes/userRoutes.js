@@ -1,9 +1,11 @@
 import { Router } from "express";
 import { isAuth } from "../middlewares/isAuth.js";
 const router = Router();
-import { getUserProfile, loginUser, myProfile, updateUser, } from "../controllers/userControllers.js";
+import { getUserProfile, loginUser, myProfile, updateProfilePicture, updateUser, } from "../controllers/userControllers.js";
+import upload from "../middlewares/multer.js";
 router.post("/login", loginUser);
 router.get("/me", isAuth, myProfile);
 router.get("/profile/:id", getUserProfile);
 router.post("/update", isAuth, updateUser);
+router.post("/update/profile-picture", isAuth, upload, updateProfilePicture);
 export default router;

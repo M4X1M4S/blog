@@ -1,7 +1,9 @@
 import { Request, Response } from "express";
+import { v2 as cloudinary } from "cloudinary";
 import User from "../model/UserModel.js";
 import jwt from "jsonwebtoken";
 import { authenticatedRequest } from "../middlewares/isAuth.js";
+import getBuffer from "../utils/datauri.js";
 
 export const loginUser = async (req: Request, res: Response) => {
   try {
@@ -80,6 +82,48 @@ export const updateUser = async (req: authenticatedRequest, res: Response) => {
     });
   } catch (error) {
     console.error("Error updating user:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const updateProfilePicture = async (
+  req: authenticatedRequest,
+  res: Response
+) => {
+  try {
+    const file = req.file;
+    if (!file) {
+      res.status(400).json({ message: "Upload Image" });
+      return;
+    }
+    const buffer = getBuffer(file);
+    if (!buffer || !buffer.content) {
+      res.status(400).json({ message: "No Buffer for the uploaded Image" });
+      return;
+    }
+    const cloud = await cloudinary.uploader.upload(buffer.content, {
+      folder: "blogs",
+    });
+    const userId = req.user?._id;
+    const user = await User.findByIdAndUpdate(
+      userId,
+      {
+        image: cloud.secure_url,
+      },
+      {
+        new: true,
+      }
+    );
+    const token = jwt.sign({ user }, process.env.JWT_SECRET as string, {
+      expiresIn: "2d",
+    });
+    res.status(200).json({
+      message: "User profile Picture updated successfully",
+      user: user,
+      token: token,
+    });
+  } catch (error) {
+    console.error("Error updating profile picture:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
