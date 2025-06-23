@@ -56,3 +56,30 @@ export const getUserProfile = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+export const updateUser = async (req: authenticatedRequest, res: Response) => {
+  const userId = req.user?._id;
+  try {
+    const { name, instagram, facebook, linkedin } = req.body;
+    if (!userId) {
+      res.status(400).json({ message: "User ID is required" });
+      return;
+    }
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { name, instagram, facebook, linkedin },
+      { new: true }
+    );
+    const token = jwt.sign({ user }, process.env.JWT_SECRET as string, {
+      expiresIn: "2d",
+    });
+    res.status(200).json({
+      message: "User updated successfully",
+      user: user,
+      token: token,
+    });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
