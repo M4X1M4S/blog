@@ -21,7 +21,6 @@ cloudinary.config({
 app.use("/api/v1", userRoutes);
 app.get("/", (req: Request, res: Response) => {
   res.send("User service is running");
-  console.log("jjsjsj");
 });
 app.listen(PORT, () => {
   console.log(`User service is running on port ${PORT}`);
