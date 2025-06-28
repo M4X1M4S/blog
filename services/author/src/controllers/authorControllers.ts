@@ -3,6 +3,7 @@ import { v2 as cloudinary } from "cloudinary";
 import getBuffer from "../utils/datauri.js";
 import { Response } from "express";
 import { sql } from "../utils/db.js";
+import { invalidateChacheJob } from "../utils/rabbitmq.js";
 
 export const createBlog = async (req: authenticatedRequest, res: Response) => {
   try {
@@ -26,6 +27,7 @@ export const createBlog = async (req: authenticatedRequest, res: Response) => {
       message: "Blog Created Successfully",
       blog: result,
     });
+    await invalidateChacheJob(["blogs:*"]);
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }
@@ -75,6 +77,7 @@ export const updateBlog = async (req: authenticatedRequest, res: Response) => {
       message: "Blog updated sucessfully",
       updatedBlog: updatedBlog[0],
     });
+    await invalidateChacheJob(["blogs:*", `blog:${id}`]);
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }
@@ -103,6 +106,7 @@ export const deleteBlog = async (req: authenticatedRequest, res: Response) => {
     res.json({
       message: "Blog Delete",
     });
+    await invalidateChacheJob(["blogs:*", `blog:${req.params.id}`]);
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }

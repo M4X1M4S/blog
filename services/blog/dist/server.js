@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import blogRoutes from "./routes/blogRoutes.js";
 import cors from "cors";
 import { createClient } from "redis";
+import { startCacheConsumer } from "./utils/consumer.js";
 dotenv.config();
 const PORT = process.env.PORT || 7000;
 const app = express();
@@ -19,6 +20,7 @@ redisClient
     console.error("Redis connection error:", err);
 });
 app.use("/api/v1", blogRoutes);
+startCacheConsumer();
 app.listen(PORT, () => {
     console.log(`blog service is running on port : ${PORT}`);
 });
