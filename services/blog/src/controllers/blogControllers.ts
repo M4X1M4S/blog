@@ -1,11 +1,21 @@
 import { authenticatedRequest } from "../middlewares/isAuth.js";
 import { Response, Request } from "express";
 import { sql } from "../utils/db.js";
+import { redisClient } from "../server.js";
 
 export const getAllBlogs = async (req: Request, res: Response) => {
   try {
-    const { searchQuery, category } = req.query;
+    const { searchQuery = "", category = "" } = req.query;
+    const cachedKey = `blogs:${searchQuery}:${category}`;
+    const cachedBlogs = await redisClient.get(cachedKey as string);
+
     let blogs;
+    if (cachedBlogs) {
+      blogs = JSON.parse(cachedBlogs);
+      res.json({ blogs: blogs, message: "Blogs fetched from cache" });
+      console.log("Blogs fetched from cache");
+      return;
+    }
     if (searchQuery && category) {
       blogs = await sql`SELECT * FROM blogs WHERE (title ILIKE ${
         "%" + searchQuery + "%"
@@ -25,7 +35,11 @@ export const getAllBlogs = async (req: Request, res: Response) => {
     } else {
       blogs = await sql`SELECT * FROM blogs ORDER BY create_at DESC `;
     }
-    res.json({ blogs: blogs, message: "Blogs fetched successfully" });
+    res.json({ blogs: blogs, message: "Blogs fetched successfully from DB" });
+    console.log("Blogs fetched from DB");
+    await redisClient.set(cachedKey as string, JSON.stringify(blogs), {
+      EX: 3600,
+    });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }
@@ -33,7 +47,16 @@ export const getAllBlogs = async (req: Request, res: Response) => {
 
 export const getBlogById = async (req: Request, res: Response) => {
   const { blogId } = req.params;
+  const cachedKey = `blog:${blogId}`;
+  const cachedBlog = await redisClient.get(cachedKey);
+
   try {
+    if (cachedBlog) {
+      const blog = JSON.parse(cachedBlog);
+      console.log("Blog fetched from cache");
+      res.json({ blog: blog, message: "Blog fetched from cache" });
+      return;
+    }
     if (!blogId) {
       res.status(400).json({ message: "Blog ID is required" });
       return;
@@ -50,11 +73,15 @@ export const getBlogById = async (req: Request, res: Response) => {
         "http://localhost:5000/api/v1/profile/" + author
       );
       const authorData = await authorDetails.json();
+      const responseData = { blog: blog[0], author: authorData.user };
 
       res.json({
-        blog: blog[0],
-        author: authorData.user,
+        response: responseData,
         message: "Blog and author fetched successfully",
+      });
+      console.log("Blog and author fetched successfully from DB");
+      await redisClient.set(cachedKey, JSON.stringify(responseData), {
+        EX: 3600,
       });
     } catch (error) {
       res.json({ message: "Author details not found", blog: blog[0] });

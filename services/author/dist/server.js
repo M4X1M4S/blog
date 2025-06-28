@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import { sql } from "./utils/db.js";
 import authorRouter from "./routes/authorRoutes.js";
 import { v2 as cloudinary } from "cloudinary";
+import { connectRabbitMQ } from "./utils/rabbitmq.js";
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -13,6 +14,7 @@ cloudinary.config({
 });
 app.use(express.json());
 app.use("/api/v1", authorRouter);
+connectRabbitMQ();
 const initDB = async () => {
     try {
         await sql `
