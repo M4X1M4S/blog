@@ -19,8 +19,8 @@ redisClient
     .catch((err) => {
     console.error("Redis connection error:", err);
 });
-app.use("/api/v1", blogRoutes);
 startCacheConsumer();
+app.use("/api/v1", blogRoutes);
 app.listen(PORT, () => {
     console.log(`blog service is running on port : ${PORT}`);
 });
