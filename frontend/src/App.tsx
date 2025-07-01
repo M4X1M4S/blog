@@ -1,5 +1,7 @@
+import GetStarted from "./components/GetStarted";
+
 const App = () => {
-  return <div className="bg-amber-600">App</div>;
+  return <GetStarted />;
 };
 
 export default App;
