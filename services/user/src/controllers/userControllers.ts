@@ -4,14 +4,36 @@ import User from "../model/UserModel.js";
 import jwt from "jsonwebtoken";
 import { authenticatedRequest } from "../middlewares/isAuth.js";
 import getBuffer from "../utils/datauri.js";
+import { oauth2client, UserInfoResponse } from "../utils/GoogleConfig.js";
+import axios from "axios";
 
 export const loginUser = async (req: Request, res: Response) => {
   try {
-    const { email, name, image } = req.body;
-    let user = await User.findOne({ email });
-    if (!user) {
-      user = await User.create({ name, email, image });
+    const { code } = req.body;
+    if (!code) {
+      res.status(400).json({ message: "Authorization code is required" });
+      return;
     }
+    const googleResponse = await oauth2client.getToken(code);
+    if (!googleResponse.tokens) {
+      res.status(400).json({ message: "Invalid authorization code" });
+      return;
+    }
+    oauth2client.setCredentials(googleResponse.tokens);
+    const userInfoRes = await axios.get<UserInfoResponse>(
+      `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${googleResponse.tokens.access_token}`
+    );
+    const { email, name, picture } = userInfoRes.data;
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = await User.create({
+        name,
+        email,
+        image: picture,
+      });
+    }
+
     const token = jwt.sign({ user }, process.env.JWT_SECRET as string, {
       expiresIn: "2d",
     });
