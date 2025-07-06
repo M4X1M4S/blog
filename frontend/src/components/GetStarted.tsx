@@ -1,6 +1,59 @@
 import { useState } from "react";
+import { useGoogleLogin } from "@react-oauth/google";
+import { setUser } from "@/utils/userSlice";
+import { useDispatch, useSelector } from "react-redux";
+import Cookies from "js-cookie";
+import type { User } from "@/utils/types";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
+// Define RootState type for useSelector
+export interface RootState {
+  user: {
+    isAuth: boolean;
+    user: User | null;
+  };
+}
 
 const GetStarted = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const isAuth = useSelector((state: RootState) => state.user.isAuth);
+
+  const googleResponse = async (authResult: any) => {
+    console.log("Google response:", authResult);
+
+    try {
+      const resp = await axios.post("http://localhost:5000/api/v1/login", {
+        code: authResult.code,
+      });
+
+      // console.log("Google sign-in successful:", resp.data);
+      const { user, token } = resp.data as {
+        message: string;
+        user: User;
+        token: string;
+      };
+      Cookies.set("token", token, {
+        expires: 2,
+        secure: true,
+      });
+      console.log("User data:", user);
+      dispatch(setUser(user));
+      navigate("/");
+    } catch (error) {
+      console.error("Error during Google sign-in:", error);
+
+      return;
+    }
+  };
+
+  const handleGoogleSignIn = useGoogleLogin({
+    onSuccess: googleResponse,
+    onError: googleResponse,
+    flow: "auth-code",
+  });
+
   const [modal, setModal] = useState(false);
   return (
     <div className="bg-[#f7f4ed] min-h-screen w-screen flex flex-col justify-between">
@@ -80,7 +133,10 @@ const GetStarted = () => {
               alt="google-logo"
               className="ml-2"
             />
-            <button className="mr-20 hover:cursor-pointer">
+            <button
+              className="mr-20 hover:cursor-pointer"
+              onClick={handleGoogleSignIn}
+            >
               Sign up with google
             </button>
           </div>

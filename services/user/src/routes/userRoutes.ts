@@ -12,9 +12,14 @@ import {
 import upload from "../middlewares/multer.js";
 
 router.post("/login", loginUser);
-router.get("/me", isAuth, myProfile);
-router.get("/profile/:id", getUserProfile);
-router.post("/update", isAuth, updateUser);
-router.post("/update/profile-picture", isAuth, upload, updateProfilePicture);
+router.get("/user/me", isAuth, myProfile);
+router.get("/user/profile/:id", getUserProfile);
+router.post("/user/update", isAuth, updateUser);
+router.post(
+  "/user/update/profile-picture",
+  isAuth,
+  upload,
+  updateProfilePicture
+);
 
 export default router;

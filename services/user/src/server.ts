@@ -3,8 +3,10 @@ import { v2 as cloudinary } from "cloudinary";
 import userRoutes from "./routes/userRoutes.js";
 import express, { Request, Response } from "express";
 import connectToDatabase from "./utils/db.js";
+import cors from "cors";
 
 const app = express();
+app.use(cors());
 
 dotenv.config();
 connectToDatabase();
